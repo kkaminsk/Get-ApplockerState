@@ -1,15 +1,19 @@
+Write-Host "[DEBUG] Script starting..." -ForegroundColor Green
 $ErrorActionPreference = 'Stop'
 
+Write-Host "[DEBUG] Resolving paths and timestamp..." -ForegroundColor Cyan
 # Resolve Documents folder and timestamp
 $docs   = [Environment]::GetFolderPath('MyDocuments')
 $stamp  = Get-Date -Format 'yyyy-MM-dd-HH-mm'
 $outDir = Join-Path $docs "Get-AppLockerState-$stamp"
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 
+Write-Host "[DEBUG] Creating output directory..." -ForegroundColor Cyan
 # Start transcript in Documents root
 $logPath = Join-Path $docs  "Get-AppLockerState-$stamp.log"
+Write-Host "[DEBUG] Starting transcript..." -ForegroundColor Cyan
 Start-Transcript -Path $logPath -Force | Out-Null
-
+Write-Host "[DEBUG] Entering main try block..." -ForegroundColor Green
 try {
     # PowerShell 5.1 check
     $psv = $PSVersionTable.PSVersion
