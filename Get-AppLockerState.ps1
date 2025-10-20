@@ -1,16 +1,50 @@
 Write-Host "[DEBUG] Script starting..." -ForegroundColor Green
 $ErrorActionPreference = 'Stop'
 
+# Prompt user for output location
+Write-Host "`nSelect output location for AppLocker collection:" -ForegroundColor Yellow
+Write-Host "  1. Documents folder (default)"
+Write-Host "  2. C:\temp"
+Write-Host "  3. Custom location"
+$choice = Read-Host "`nEnter your choice (1-3) [default: 1]"
+
+if ([string]::IsNullOrWhiteSpace($choice)) { $choice = '1' }
+
 Write-Host "[DEBUG] Resolving paths and timestamp..." -ForegroundColor Cyan
-# Resolve Documents folder and timestamp
-$docs   = [Environment]::GetFolderPath('MyDocuments')
 $stamp  = Get-Date -Format 'yyyy-MM-dd-HH-mm'
-$outDir = Join-Path $docs "Get-AppLockerState-$stamp"
+
+switch ($choice) {
+    '1' {
+        $baseDir = [Environment]::GetFolderPath('MyDocuments')
+        Write-Host "Using Documents folder: $baseDir" -ForegroundColor Green
+    }
+    '2' {
+        $baseDir = 'C:\temp'
+        if (-not (Test-Path $baseDir)) {
+            New-Item -ItemType Directory -Path $baseDir -Force | Out-Null
+        }
+        Write-Host "Using C:\temp" -ForegroundColor Green
+    }
+    '3' {
+        $baseDir = Read-Host "Enter custom output path"
+        if (-not (Test-Path $baseDir)) {
+            Write-Host "Creating directory: $baseDir" -ForegroundColor Cyan
+            New-Item -ItemType Directory -Path $baseDir -Force | Out-Null
+        }
+        Write-Host "Using custom location: $baseDir" -ForegroundColor Green
+    }
+    default {
+        $baseDir = [Environment]::GetFolderPath('MyDocuments')
+        Write-Host "Invalid choice. Using Documents folder: $baseDir" -ForegroundColor Yellow
+    }
+}
+
+$outDir = Join-Path $baseDir "Get-AppLockerState-$stamp"
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 
 Write-Host "[DEBUG] Creating output directory..." -ForegroundColor Cyan
-# Start transcript in Documents root
-$logPath = Join-Path $docs  "Get-AppLockerState-$stamp.log"
+# Start transcript in base directory
+$logPath = Join-Path $baseDir "Get-AppLockerState-$stamp.log"
 Write-Host "[DEBUG] Starting transcript..." -ForegroundColor Cyan
 Start-Transcript -Path $logPath -Force | Out-Null
 Write-Host "[DEBUG] Entering main try block..." -ForegroundColor Green
@@ -236,9 +270,9 @@ try {
             Tee-Object -FilePath (Join-Path $outDir 'warnings.txt') -Append | ForEach-Object { Write-Warning $_ }
     }
 
-    # 7) Zip output folder in Documents with same base as transcript
+    # 7) Zip output folder in base directory with same base as transcript
     try {
-        $zipPath = Join-Path $docs "Get-AppLockerState-$stamp.zip"
+        $zipPath = Join-Path $baseDir "Get-AppLockerState-$stamp.zip"
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
         Compress-Archive -Path $outDir -DestinationPath $zipPath
     } catch {
@@ -247,5 +281,11 @@ try {
     }
 
 } finally {
-    try { Stop-Transcript | Out-Null } catch { }
+    try { 
+        Stop-Transcript | Out-Null 
+        Write-Host "`n[SUCCESS] Collection complete." -ForegroundColor Green
+        Write-Host "- Transcript: $logPath" -ForegroundColor Gray
+        Write-Host "- Output Dir: $outDir" -ForegroundColor Gray
+        Write-Host "- Zip File:   $zipPath" -ForegroundColor Gray
+    } catch { }
 }
