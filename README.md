@@ -30,6 +30,8 @@ In the timestamped output folder:
   - Microsoft-Windows-AppLocker/Packaged app-Deployment
   - Microsoft-Windows-AppLocker/Packaged app-Execution
 - ApplicationIdentityService.txt
+- SrpV2.reg
+- SRPGP.reg
 - warnings.txt (non-fatal issues)
 
 ## Troubleshooting

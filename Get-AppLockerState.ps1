@@ -215,7 +215,24 @@ try {
             Tee-Object -FilePath (Join-Path $outDir 'warnings.txt') -Append | ForEach-Object { Write-Warning $_ }
     }
 
-    # 6) Zip output folder in Documents with same base as transcript
+    # 6) Export SRP Registry Keys
+    try {
+        $srpV2Path = Join-Path $outDir 'SrpV2.reg'
+        reg.exe export 'HKLM\Software\Policies\Microsoft\Windows\SrpV2' "$srpV2Path" /y
+    } catch {
+        "Registry key 'HKLM\Software\Policies\Microsoft\Windows\SrpV2' not found or could not be exported: $($_.Exception.Message)" |
+            Tee-Object -FilePath (Join-Path $outDir 'warnings.txt') -Append | ForEach-Object { Write-Warning $_ }
+    }
+
+    try {
+        $srpGpPath = Join-Path $outDir 'SRPGP.reg'
+        reg.exe export 'HKLM\System\CurrentControlSet\Control\SRP\GP' "$srpGpPath" /y
+    } catch {
+        "Registry key 'HKLM\System\CurrentControlSet\Control\SRP\GP' not found or could not be exported: $($_.Exception.Message)" |
+            Tee-Object -FilePath (Join-Path $outDir 'warnings.txt') -Append | ForEach-Object { Write-Warning $_ }
+    }
+
+    # 7) Zip output folder in Documents with same base as transcript
     try {
         $zipPath = Join-Path $docs "Get-AppLockerState-$stamp.zip"
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
