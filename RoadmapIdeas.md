@@ -1,0 +1,2 @@
+Collect AppLocker Registry Configuration
+Collect MDM configuration
